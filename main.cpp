@@ -14,8 +14,8 @@ const size_t RGBA = 4;
 char asciiCodesByPixelIntensity[] = {
     ' ','\'','`','^','"',',',':',';','I','l','!','i','>','<','~','+','_','-','?',']','[','}','{','1',')','(','|','/','t','f','j','r','x','n','u','v','c','z','X','Y','U','J','C','L','Q','0','O','Z','m','w','q','p','d','b','k','h','a','o','*','#','M','W','&','8','%','B','@','$'
 };
-
 int asciiCodesByPixelIntensityLength = sizeof(asciiCodesByPixelIntensity)/sizeof(char);
+
 
 void draw(std::vector<unsigned char> &frame, int width, int height, float currentFps) {
     struct winsize windowSize;
@@ -45,18 +45,44 @@ void draw(std::vector<unsigned char> &frame, int width, int height, float curren
             }
 
             graySum /= (double)blockSize;
-            int charIndex = graySum/255*asciiCodesByPixelIntensityLength;
+            int charIndex = graySum/255*(asciiCodesByPixelIntensityLength-1);
 
-            cout<<asciiCodesByPixelIntensity[charIndex];
+            char v = asciiCodesByPixelIntensity[charIndex];
+            if (v == 'D') {
+                cout<<asciiCodesByPixelIntensity[68]<<" ";
+            } else {
+                cout<<v;
+            }
         }
         cout<<endl;
     }  
 }
 
+void reverse(char arr[], int num)  
+{  
+    for ( int i = 0, j = num - 1; i < num/2; i++, j--)  
+    {     
+        char temp = arr[i];  
+        arr[i] = arr[j];  
+        arr[j] = temp;  
+    }  
+}  
 
-int main() {
+
+int main(int argc, char** argv) {
+    if (argc < 2) {
+        cout<<"Minimum 2 arguments required!"<<endl<<"./main [image_path] [...opions]"<<endl;
+        return 1;
+    }
+  
+    for (int i = 0; i < argc; i++) {
+        if ((string)argv[i] == "--negative" or (string)argv[i] == "-n") {
+            reverse(asciiCodesByPixelIntensity, asciiCodesByPixelIntensityLength);
+        }
+    }
+
     clock_t lastFrameTime = clock();
-    string fileName = "./images/mario.png";
+    string fileName = argv[1];
     int width, height;
     std::vector<unsigned char> image;
     bool success = load_image(image, fileName, width, height);
