@@ -5,7 +5,7 @@
 This is a C++ program that receives an image as input and prints an ascii art on the terminal.
 
 ## Important
-The software was made to run only in gnome terminals.
+The software was made to work only for gnome terminals.
 
 ## Running the app
 ```
