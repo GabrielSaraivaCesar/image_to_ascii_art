@@ -22,14 +22,14 @@ void draw(std::vector<unsigned char> &frame, int width, int height, float curren
     struct winsize windowSize;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &windowSize);
 
-    double xProportion = (double)width / (double)windowSize.ws_col;
-    double yProportion = (double)width / (double)height * xProportion;
+    double xProportion = (double)width / (double)windowSize.ws_col; // Get console full width
+    double yProportion = (double)width / (double)height * xProportion; // Keep aspect ratio
     
-    int totalPixelsPerBlock = yProportion*xProportion;
-    for (int row = 0; floor((double)row*yProportion)+yProportion < height ; row++) {
-        for (int col = 0; col < windowSize.ws_col; col++) {
+    for (int row = 0; floor((double)row*yProportion)+yProportion < height ; row++) { // Y
+        for (int col = 0; col < windowSize.ws_col; col++) { // X
             double graySum = 0;
             int blockSize = 0;
+            // Get the pixels from original image contained inside the current console XY
             for (int relX = floor((double)col*xProportion); relX < floor((double)col*xProportion)+xProportion && relX <= width; relX++) {
                 for (int relY = floor((double)row*yProportion); relY < floor((double)row*yProportion)+yProportion && relY <= height; relY++) {
                     blockSize += 1;
@@ -38,7 +38,8 @@ void draw(std::vector<unsigned char> &frame, int width, int height, float curren
                     int g = static_cast<int>(frame[index + 1]);
                     int b = static_cast<int>(frame[index + 2]);
                     int a = static_cast<int>(frame[index + 3]);
-                    graySum += (r+g+b)/3*(a/255);
+                    // Transform RGBA to gray
+                    graySum += (r+g+b)/3*(a/255); // (Mean of RGB) * (0...1) 
                 }   
             }
             if (blockSize == 0) {
@@ -48,12 +49,7 @@ void draw(std::vector<unsigned char> &frame, int width, int height, float curren
             graySum /= (double)blockSize;
             int charIndex = graySum/255*(asciiCodesByPixelIntensityLength-1);
 
-            char v = asciiCodesByPixelIntensity[charIndex];
-            if (v == 'D') {
-                cout<<asciiCodesByPixelIntensity[68]<<" ";
-            } else {
-                cout<<v;
-            }
+            cout<<asciiCodesByPixelIntensity[charIndex];
         }
         cout<<endl;
     }  
@@ -82,17 +78,16 @@ int main(int argc, char** argv) {
         }
     }
 
-    clock_t lastFrameTime = clock();
     string fileName = argv[1];
     int width, height;
     std::vector<unsigned char> image;
     bool success = load_image(image, fileName, width, height);
 
-
-    const size_t RGBA = 4;
-    int x = 1;
-    int y = 1;
-    size_t index = RGBA * (y * width + x);
+    if (!success) {
+        cout<<"Invalid image!"<<endl;
+        return 1;
+    }
+    
     draw(image, width, height, 0);
     return 0;
 }
