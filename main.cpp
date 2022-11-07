@@ -1,9 +1,10 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include "clearing.h"
 #include "images.h"
 #include <math.h> 
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 using namespace std;
 
