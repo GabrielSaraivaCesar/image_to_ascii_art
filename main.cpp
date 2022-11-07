@@ -3,6 +3,7 @@
 #include <string>
 #include "clearing.h"
 #include "images.h"
+#include <math.h> 
 
 using namespace std;
 
@@ -19,17 +20,18 @@ int asciiCodesByPixelIntensityLength = sizeof(asciiCodesByPixelIntensity)/sizeof
 void draw(std::vector<unsigned char> &frame, int width, int height, float currentFps) {
     struct winsize windowSize;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &windowSize);
-    clearConsole();
-    double yProportion = height / windowSize.ws_row;
-    double xProportion = width / height * yProportion;
+
+    double xProportion = (double)width / (double)windowSize.ws_col;
+    double yProportion = (double)width / (double)height * xProportion;
     
     int totalPixelsPerBlock = yProportion*xProportion;
-
-    for (int row = 0; row < windowSize.ws_row; row++) {
-        for (int col = 0; col < windowSize.ws_col; col++) { 
+    for (int row = 0; floor((double)row*yProportion)+yProportion < height ; row++) {
+        for (int col = 0; col < windowSize.ws_col; col++) {
             double graySum = 0;
-            for (int relX = col*xProportion; relX < (col*xProportion)+xProportion; relX++) {
-                for (int relY = row*yProportion; relY < (row*yProportion)+yProportion; relY++) {
+            int blockSize = 0;
+            for (int relX = floor((double)col*xProportion); relX < floor((double)col*xProportion)+xProportion && relX <= width; relX++) {
+                for (int relY = floor((double)row*yProportion); relY < floor((double)row*yProportion)+yProportion && relY <= height; relY++) {
+                    blockSize += 1;
                     size_t index = RGBA * (relY * width + relX);
                     int r = static_cast<int>(frame[index + 0]);
                     int g = static_cast<int>(frame[index + 1]);
@@ -38,8 +40,13 @@ void draw(std::vector<unsigned char> &frame, int width, int height, float curren
                     graySum += (r+g+b)/3*(a/255);
                 }   
             }
-            graySum /= totalPixelsPerBlock;
+            if (blockSize == 0) {
+                break;
+            }
+
+            graySum /= (double)blockSize;
             int charIndex = graySum/255*asciiCodesByPixelIntensityLength;
+
             cout<<asciiCodesByPixelIntensity[charIndex];
         }
         cout<<endl;
@@ -49,7 +56,7 @@ void draw(std::vector<unsigned char> &frame, int width, int height, float curren
 
 int main() {
     clock_t lastFrameTime = clock();
-    string fileName = "./Octocat.png";
+    string fileName = "./images/mario.png";
     int width, height;
     std::vector<unsigned char> image;
     bool success = load_image(image, fileName, width, height);
@@ -60,15 +67,5 @@ int main() {
     int y = 1;
     size_t index = RGBA * (y * width + x);
     draw(image, width, height, 0);
-    while(true){}
-    // while(true) {
-    //     clock_t currentFrameTime = clock();
-    //     if (currentFrameTime - lastFrameTime >= fpsMark) {
-    //         int currentFps = (fpsMark*fps)/(currentFrameTime - lastFrameTime);
-    //         draw(image, width, height, currentFps);
-    //         lastFrameTime = currentFrameTime;
-    //     }
-    // }
-
     return 0;
 }
